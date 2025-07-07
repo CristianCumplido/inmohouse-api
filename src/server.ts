@@ -21,7 +21,7 @@ class Application {
       // Connect to database
       const mongoUri =
         process.env.MONGODB_URI ||
-        "mongodb://localhost:27017/property-management";
+        "mongodb+srv://cristiancumplido:awdvxVitKifXzCye@cluster0.k9fdyni.mongodb.net/inmoHouse?retryWrites=true&w=majority&appName=Cluster0";
       await this.database.connect(mongoUri);
 
       // Start server
