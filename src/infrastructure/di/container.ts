@@ -1,0 +1,98 @@
+// Dependency Injection Container - Contenedor de dependencias
+
+import { AuthUseCase } from "@application/usecases/auth.usecase";
+import { UserUseCase } from "@application/usecases/user.usecase";
+import { PropertyUseCase } from "@application/usecases/property.usecase";
+
+import { MongoUserRepository } from "@infrastructure/repositories/user.repository";
+import { MongoPropertyRepository } from "@infrastructure/repositories/property.repository";
+
+import {
+  BcryptPasswordService,
+  JwtTokenService,
+} from "@infrastructure/services";
+import { AuthMiddleware } from "@infrastructure/middleware";
+
+import { AuthController } from "@presentation/controllers/auth.controller";
+import { UserController } from "@presentation/controllers/user.controller";
+import { PropertyController } from "@presentation/controllers/property.controller";
+
+import { AppRoutes } from "@presentation/routes";
+
+export class DIContainer {
+  private static instance: DIContainer;
+
+  // Services
+  public readonly passwordService: BcryptPasswordService;
+  public readonly tokenService: JwtTokenService;
+
+  // Repositories
+  public readonly userRepository: MongoUserRepository;
+  public readonly propertyRepository: MongoPropertyRepository;
+
+  // Use Cases
+  public readonly authUseCase: AuthUseCase;
+  public readonly userUseCase: UserUseCase;
+  public readonly propertyUseCase: PropertyUseCase;
+
+  // Middleware
+  public readonly authMiddleware: AuthMiddleware;
+
+  // Controllers
+  public readonly authController: AuthController;
+  public readonly userController: UserController;
+  public readonly propertyController: PropertyController;
+
+  // Routes
+  public readonly appRoutes: AppRoutes;
+
+  private constructor() {
+    // Initialize services
+    this.passwordService = new BcryptPasswordService();
+    this.tokenService = new JwtTokenService(
+      process.env.JWT_SECRET || "fallback-secret-key",
+      process.env.JWT_EXPIRES_IN || "7d"
+    );
+
+    // Initialize repositories
+    this.userRepository = new MongoUserRepository();
+    this.propertyRepository = new MongoPropertyRepository();
+
+    // Initialize use cases
+    this.authUseCase = new AuthUseCase(
+      this.userRepository,
+      this.passwordService,
+      this.tokenService
+    );
+
+    this.userUseCase = new UserUseCase(
+      this.userRepository,
+      this.passwordService
+    );
+
+    this.propertyUseCase = new PropertyUseCase(this.propertyRepository);
+
+    // Initialize middleware
+    this.authMiddleware = new AuthMiddleware(this.tokenService);
+
+    // Initialize controllers
+    this.authController = new AuthController(this.authUseCase);
+    this.userController = new UserController(this.userUseCase);
+    this.propertyController = new PropertyController(this.propertyUseCase);
+
+    // Initialize routes
+    this.appRoutes = new AppRoutes(
+      this.authController,
+      this.userController,
+      this.propertyController,
+      this.authMiddleware
+    );
+  }
+
+  public static getInstance(): DIContainer {
+    if (!DIContainer.instance) {
+      DIContainer.instance = new DIContainer();
+    }
+    return DIContainer.instance;
+  }
+}
