@@ -7,8 +7,13 @@ import {
   AuthResponse,
   UserCreateRequest,
   User,
+  UserRole,
 } from "@domain/entities";
+import { AzureTokenPayload } from "@/domain/services/azure-token.service";
 
+interface IAzureTokenService {
+  validateToken(token: string): Promise<AzureTokenPayload>;
+}
 // Extender la interfaz del repositorio para incluir el método con password
 interface IUserRepositoryExtended extends IUserRepository {
   findByEmailWithPassword(
@@ -20,7 +25,8 @@ export class AuthUseCase {
   constructor(
     private userRepository: IUserRepositoryExtended,
     private passwordService: IPasswordService,
-    private tokenService: ITokenService
+    private tokenService: ITokenService,
+    private azureTokenService: IAzureTokenService
   ) {}
 
   async login(authRequest: AuthRequest): Promise<AuthResponse> {
@@ -109,6 +115,61 @@ export class AuthUseCase {
       return user;
     } catch (error) {
       throw new Error("Invalid token");
+    }
+  }
+  async loginWithAzure(azureToken: string): Promise<AuthResponse> {
+    try {
+      // 1. Validar token de Azure
+      const azurePayload = await this.azureTokenService.validateToken(
+        azureToken
+      );
+
+      if (!azurePayload.email) {
+        throw new Error("Email not found in Azure token");
+      }
+
+      // 2. Buscar usuario existente
+      let user = await this.userRepository.findByEmail(azurePayload.email);
+
+      if (user) {
+        // 3. Si existe, verificar que esté activo
+        if (!user.isActive) {
+          throw new Error("Account is deactivated");
+        }
+      } else {
+        // 4. Si no existe, crear nuevo usuario
+        const userName =
+          azurePayload.name ||
+          `${azurePayload.given_name || ""} ${
+            azurePayload.family_name || ""
+          }`.trim() ||
+          azurePayload.email.split("@")[0];
+        const hashedPassword = await this.passwordService.hash("usuario1234");
+        const userCreateRequest: UserCreateRequest = {
+          name: userName,
+          email: azurePayload.email,
+          password: hashedPassword, // Sin contraseña porque es SSO
+          role: UserRole.CLIENT, // Rol por defecto
+        };
+
+        user = await this.userRepository.create(userCreateRequest);
+      }
+
+      // 5. Generar token JWT interno
+      const token = this.tokenService.generateToken({
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+      });
+
+      return {
+        token,
+        user,
+      };
+    } catch (error) {
+      throw new Error(
+        error instanceof Error ? error.message : "Azure authentication failed"
+      );
     }
   }
 }

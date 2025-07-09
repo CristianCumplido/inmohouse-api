@@ -117,4 +117,26 @@ export class AuthController {
       });
     }
   };
+  loginWithAzure = async (req: Request, res: Response) => {
+    try {
+      const { azureToken } = req.body;
+
+      if (!azureToken) {
+        return res.status(400).json({
+          message: "Azure token is required",
+        });
+      }
+
+      const result = await this.authUseCase.loginWithAzure(azureToken);
+
+      res.status(200).json({
+        message: "Azure login successful",
+        data: result,
+      });
+    } catch (error) {
+      res.status(401).json({
+        message: error instanceof Error ? error.message : "Azure login failed",
+      });
+    }
+  };
 }

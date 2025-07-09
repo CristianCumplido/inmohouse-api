@@ -57,6 +57,7 @@ export class AppRoutes {
     authRouter.post("/validate-token", this.authController.validateToken);
 
     this.router.use("/auth", authRouter);
+    authRouter.post("/azure-login", this.authController.loginWithAzure);
   }
 
   private setupUserRoutes() {

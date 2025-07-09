@@ -6,6 +6,7 @@ import { PropertyUseCase } from "@application/usecases/property.usecase";
 
 import { MongoUserRepository } from "@infrastructure/repositories/user.repository";
 import { MongoPropertyRepository } from "@infrastructure/repositories/property.repository";
+import { AzureTokenService } from "@infrastructure/services/azure-token.service";
 
 import {
   BcryptPasswordService,
@@ -27,6 +28,8 @@ export class DIContainer {
   public readonly tokenService: JwtTokenService;
 
   // Repositories
+  public readonly azureTokenService: AzureTokenService =
+    new AzureTokenService();
   public readonly userRepository: MongoUserRepository;
   public readonly propertyRepository: MongoPropertyRepository;
 
@@ -62,7 +65,8 @@ export class DIContainer {
     this.authUseCase = new AuthUseCase(
       this.userRepository,
       this.passwordService,
-      this.tokenService
+      this.tokenService,
+      this.azureTokenService
     );
 
     this.userUseCase = new UserUseCase(
