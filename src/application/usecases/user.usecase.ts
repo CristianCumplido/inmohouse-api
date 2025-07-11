@@ -21,7 +21,10 @@ export class UserUseCase {
     requestingUserRole: UserRole
   ): Promise<User> {
     // Verificar permisos - Solo admin puede crear usuarios
-    if (requestingUserRole !== UserRole.ADMIN) {
+    if (
+      requestingUserRole !== UserRole.ADMIN &&
+      requestingUserRole !== UserRole.AGENT
+    ) {
       throw new Error("Insufficient permissions");
     }
 
@@ -53,7 +56,11 @@ export class UserUseCase {
     requestingUserRole: UserRole
   ): Promise<User> {
     // Verificar permisos
-    if (requestingUserRole !== UserRole.ADMIN && requestingUserId !== id) {
+    if (
+      requestingUserRole !== UserRole.ADMIN &&
+      requestingUserRole !== UserRole.AGENT &&
+      requestingUserId !== id
+    ) {
       throw new Error("Insufficient permissions");
     }
 
@@ -69,12 +76,14 @@ export class UserUseCase {
     filters: UserFilters,
     requestingUserRole: UserRole
   ): Promise<{ users: User[]; total: number }> {
-    // Verificar permisos - Solo admin puede ver todos los usuarios
-    if (requestingUserRole !== UserRole.ADMIN) {
+    // Verificar permisos - Solo admin y agentes pueden ver usuarios
+    if (requestingUserRole === UserRole.ADMIN) {
+      return await this.userRepository.findAll(filters);
+    } else if (requestingUserRole === UserRole.AGENT) {
+      return await this.userRepository.findAllbyAgent(filters);
+    } else {
       throw new Error("Insufficient permissions");
     }
-
-    return await this.userRepository.findAll(filters);
   }
 
   async updateUser(
@@ -84,12 +93,12 @@ export class UserUseCase {
     requestingUserRole: UserRole
   ): Promise<User> {
     // Verificar permisos
-    if (requestingUserRole !== UserRole.ADMIN && requestingUserId !== id) {
+    if (requestingUserRole == UserRole.CLIENT && requestingUserId !== id) {
       throw new Error("Insufficient permissions");
     }
 
     // No permitir que usuarios no admin cambien el rol
-    if (requestingUserRole !== UserRole.ADMIN && userRequest.role) {
+    if (requestingUserRole == UserRole.CLIENT && userRequest.role) {
       throw new Error("Cannot change user role");
     }
 
@@ -119,7 +128,7 @@ export class UserUseCase {
 
   async deleteUser(id: string, requestingUserRole: UserRole): Promise<void> {
     // Verificar permisos - Solo admin puede eliminar usuarios
-    if (requestingUserRole !== UserRole.ADMIN) {
+    if (requestingUserRole == UserRole.CLIENT) {
       throw new Error("Insufficient permissions");
     }
 

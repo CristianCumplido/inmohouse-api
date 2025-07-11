@@ -69,7 +69,7 @@ export class AppRoutes {
     // Solo admin puede crear usuarios
     userRouter.post(
       "/",
-      this.authMiddleware.authorize([UserRole.ADMIN]),
+      this.authMiddleware.authorize([UserRole.ADMIN, UserRole.AGENT]),
       this.userController.createUser
     );
 
@@ -77,7 +77,7 @@ export class AppRoutes {
     userRouter.get(
       "/",
       ValidationMiddleware.validatePagination,
-      this.authMiddleware.authorize([UserRole.ADMIN]),
+      this.authMiddleware.authorize([UserRole.ADMIN, UserRole.AGENT]),
       this.userController.getAllUsers
     );
 
@@ -90,7 +90,7 @@ export class AppRoutes {
     // Solo admin puede eliminar usuarios
     userRouter.delete(
       "/:id",
-      this.authMiddleware.authorize([UserRole.ADMIN]),
+      this.authMiddleware.authorize([UserRole.ADMIN, UserRole.AGENT]),
       this.userController.deleteUser
     );
 

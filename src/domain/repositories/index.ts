@@ -21,6 +21,10 @@ export interface IUserRepository {
     email: string
   ): Promise<(User & { password: string }) | null>;
   findAll(filters?: UserFilters): Promise<{ users: User[]; total: number }>;
+  findAllbyAgent(
+    filters?: UserFilters
+  ): Promise<{ users: User[]; total: number }>;
+
   update(id: string, userData: UserUpdateRequest): Promise<User | null>;
   delete(id: string): Promise<boolean>;
   updatePassword(id: string, hashedPassword: string): Promise<boolean>;

@@ -87,6 +87,56 @@ export class MongoUserRepository implements IUserRepository {
       total,
     };
   }
+  async findAllbyAgent(
+    filters: UserFilters = {}
+  ): Promise<{ users: User[]; total: number }> {
+    const {
+      page = 1,
+      limit = 10,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+      role,
+      isActive,
+      search,
+    } = filters;
+
+    const query: any = {
+      role: { $ne: "ADMIN" },
+    };
+
+    if (role) {
+      query.$and = [{ role: { $ne: "ADMIN" } }, { role }];
+    }
+
+    if (isActive !== undefined) {
+      query.isActive = isActive;
+    }
+
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    // Calcular skip
+    const skip = (page - 1) * limit;
+
+    // Construir sort
+    const sort: any = {};
+    sort[sortBy] = sortOrder === "asc" ? 1 : -1;
+
+    // Ejecutar consultas
+    const [users, total] = await Promise.all([
+      UserModel.find(query).sort(sort).skip(skip).limit(limit).exec(),
+      UserModel.countDocuments(query),
+    ]);
+
+    return {
+      users: users.map((user) => this.toUser(user)),
+      total,
+    };
+  }
 
   async update(id: string, userData: UserUpdateRequest): Promise<User | null> {
     const updatedUser = await UserModel.findByIdAndUpdate(
