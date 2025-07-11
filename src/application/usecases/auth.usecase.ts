@@ -144,7 +144,7 @@ export class AuthUseCase {
             azurePayload.family_name || ""
           }`.trim() ||
           azurePayload.email.split("@")[0];
-        const hashedPassword = await this.passwordService.hash("usuario1234");
+        const hashedPassword = await this.passwordService.hash("User1234");
         const userCreateRequest: UserCreateRequest = {
           name: userName,
           email: azurePayload.email,
