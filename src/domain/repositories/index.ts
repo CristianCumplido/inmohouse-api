@@ -5,6 +5,11 @@ import {
   UserCreateRequest,
   UserUpdateRequest,
   UserFilters,
+  Appointment,
+  AppointmentCreateRequest,
+  AppointmentFilters,
+  AppointmentUpdateRequest,
+  AppointmentWithDetails,
 } from "../entities";
 import {
   Property,
@@ -47,4 +52,67 @@ export interface IPropertyRepository {
     agentId: string,
     filters?: PropertyFilters
   ): Promise<{ properties: Property[]; total: number }>;
+}
+export interface IAppointmentRepository {
+  create(
+    appointmentData: AppointmentCreateRequest & {
+      clientId: string;
+      endTime: string;
+      status?: string;
+    }
+  ): Promise<Appointment>;
+
+  findById(id: string): Promise<Appointment | null>;
+
+  findByIdWithDetails(id: string): Promise<AppointmentWithDetails | null>;
+
+  findAll(filters: AppointmentFilters): Promise<{
+    appointments: Appointment[];
+    total: number;
+  }>;
+
+  findAllWithDetails(filters: AppointmentFilters): Promise<{
+    appointments: AppointmentWithDetails[];
+    total: number;
+  }>;
+
+  findByClientId(
+    clientId: string,
+    filters: AppointmentFilters
+  ): Promise<{
+    appointments: Appointment[];
+    total: number;
+  }>;
+
+  findByPropertyId(
+    propertyId: string,
+    filters: AppointmentFilters
+  ): Promise<{
+    appointments: Appointment[];
+    total: number;
+  }>;
+
+  findByAgentId(
+    agentId: string,
+    filters: AppointmentFilters
+  ): Promise<{
+    appointments: Appointment[];
+    total: number;
+  }>;
+
+  update(
+    id: string,
+    appointmentData: AppointmentUpdateRequest
+  ): Promise<Appointment | null>;
+
+  delete(id: string): Promise<boolean>;
+
+  // Métodos para validar disponibilidad (futuras implementaciones)
+  findConflictingAppointments(
+    propertyId: string,
+    date: Date,
+    startTime: string,
+    endTime: string,
+    excludeAppointmentId?: string
+  ): Promise<Appointment[]>;
 }

@@ -3,6 +3,8 @@
 import { Router } from "express";
 import { AuthController } from "../controllers/auth.controller";
 import { UserController } from "../controllers/user.controller";
+import { AppointmentController } from "../controllers/appointment.controller";
+
 import { PropertyController } from "../controllers/property.controller";
 import {
   AuthMiddleware,
@@ -18,6 +20,7 @@ export class AppRoutes {
     private authController: AuthController,
     private userController: UserController,
     private propertyController: PropertyController,
+    private appointmentController: AppointmentController,
     authMiddleware: AuthMiddleware
   ) {
     this.router = Router();
@@ -42,6 +45,9 @@ export class AppRoutes {
 
     // Property routes
     this.setupPropertyRoutes();
+
+    // Appointment routes
+    this.setupAppOintmentRoutes();
   }
 
   private setupAuthRoutes() {
@@ -144,6 +150,51 @@ export class AppRoutes {
     );
 
     this.router.use("/properties", propertyRouter);
+  }
+
+  private setupAppOintmentRoutes() {
+    const appOintmentRouter = Router();
+    appOintmentRouter.use(this.authMiddleware.authenticate);
+
+    // GET /api/appointments - Obtener todas las citas (filtradas por rol)
+    appOintmentRouter.get("/", this.appointmentController.getAllAppointments);
+
+    // POST /api/appointments - Crear una nueva cita (solo clientes)
+    appOintmentRouter.post("/", this.appointmentController.createAppointment);
+
+    // GET /api/appointments/:id - Obtener una cita específica
+    appOintmentRouter.get(
+      "/:id",
+      this.appointmentController.getAppointmentById
+    );
+
+    // PUT /api/appointments/:id - Actualizar una cita
+    appOintmentRouter.put("/:id", this.appointmentController.updateAppointment);
+
+    // PATCH /api/appointments/:id/cancel - Cancelar una cita
+    appOintmentRouter.patch(
+      "/:id/cancel",
+      this.appointmentController.cancelAppointment
+    );
+
+    // PATCH /api/appointments/:id/confirm - Confirmar una cita (agentes/admin)
+    appOintmentRouter.patch(
+      "/:id/confirm",
+      this.appointmentController.confirmAppointment
+    );
+
+    // PATCH /api/appointments/:id/complete - Completar una cita (agentes/admin)
+    appOintmentRouter.patch(
+      "/:id/complete",
+      this.appointmentController.completeAppointment
+    );
+
+    // GET /api/appointments/property/:propertyId - Obtener citas de una propiedad específica
+    appOintmentRouter.get(
+      "/property/:propertyId",
+      this.appointmentController.getAppointmentsByProperty
+    );
+    this.router.use("/appointments", appOintmentRouter);
   }
 
   public getRouter(): Router {

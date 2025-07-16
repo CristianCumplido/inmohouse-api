@@ -130,3 +130,78 @@ export interface UserFilters extends PaginationQuery {
   isActive?: boolean;
   search?: string;
 }
+
+// Domain Entities - Capa de Dominio para Appointments
+
+export enum AppointmentStatus {
+  PENDING = "Pendiente",
+  CONFIRMED = "Confirmada",
+  COMPLETED = "Completada",
+  CANCELLED = "Cancelada",
+}
+
+export interface Appointment {
+  id: string;
+  propertyId: string;
+  clientId: string;
+  agentId?: string;
+  date: Date;
+  startTime: string; // "HH:MM" format
+  endTime: string; // "HH:MM" format
+  status: AppointmentStatus;
+  notes?: string;
+  clientNotes?: string;
+  agentNotes?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface AppointmentCreateRequest {
+  propertyId: string;
+  date: Date;
+  startTime: string; // "HH:MM" format
+  notes?: string;
+}
+
+export interface AppointmentUpdateRequest {
+  date?: Date;
+  startTime?: string;
+  endTime?: string;
+  status?: AppointmentStatus;
+  notes?: string;
+  clientNotes?: string;
+  agentNotes?: string;
+  agentId?: string;
+}
+
+export interface AppointmentFilters extends PaginationQuery {
+  propertyId?: string;
+  clientId?: string;
+  agentId?: string;
+  status?: AppointmentStatus;
+  dateFrom?: Date;
+  dateTo?: Date;
+  location?: string; // Para filtrar por ubicación de la propiedad
+}
+
+export interface AppointmentWithDetails extends Appointment {
+  property?: {
+    id: string;
+    title: string;
+    location: string;
+    imageUrl: string;
+    price: number;
+  };
+  client?: {
+    id: string;
+    name: string;
+    email: string;
+    phone?: string;
+  };
+  agent?: {
+    id: string;
+    name: string;
+    email: string;
+    phone?: string;
+  };
+}
